@@ -89,4 +89,4 @@ if uploaded_file is not None:
 
 else:
    st.info('Please upload the file containing the data.')
-   #st.video('img.mov')
+   st.video('img.mov')
