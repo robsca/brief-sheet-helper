@@ -15,6 +15,8 @@ def transform(df):
    features_time = ['Start1', 'Stop1', 'Start2', 'Stop2']
    # drop columns if start1, stop1, start2, stop2 are all 0
    df = df.drop(df[(df[features_time] == 0).all(axis=1)].index)
+   # show how many rows are left
+   #st.info(f'{df.shape[0]} rows left after dropping rows with all 0 values.')
 
    # create a new column for name and surname
    df['Name'] = df['Employee'].str.split(' ', expand=True)[0]
@@ -38,12 +40,17 @@ def transform(df):
       # keep only the time
       df[feature] = df[feature].dt.time
 
-
+   #st.write(df)
+   
    # iterate over the rows
    for index, row in df.iterrows():
       # if start1 is >= to 15:00 then takes use the value for start2 and use the stop1 as stop2
       hour_start1 = int(row['Start1'].hour)
-      if hour_start1 >= 14:
+      try:
+         hour_start2 = int(row['Start2'].hour)
+      except:
+         hour_start2 = None
+      if hour_start1 >= 12 and hour_start2 == None:
          df.at[index, 'Start2'] = row['Start1']
          df.at[index, 'Stop2']  = row['Stop1']
          df.at[index, 'Start1'] = None
@@ -71,16 +78,29 @@ def transform(df):
 
    # SHOW RESULTS
    divisions = df['Division'].unique()
-   
+   # transform the 4 columns to string
+   df[features_time] = df[features_time].astype(str)
+
+   tot = 0
    for d in divisions:
       with st.expander(f'{d}'):
+         # if none use ' ' instead
          # create a new dataframe for each division
          df_div = df[df['Division'] == d]
          # sort the dataframe by start1
          df_div = df_div.sort_values(by=['Start1'])
          # drop the index
          df_div = df_div.reset_index(drop=True)
-         st.write(df_div)
+         # add to the total
+         tot += df_div.shape[0]
+         # if "None" use ' ' instead
+         df_div = df_div.replace('None', ' ')
+         st.experimental_data_editor(df_div)
+
+
+   # show total number of people
+   #st.info(f'Total number of people in dataframe: {df.shape[0]}')
+   #st.info(f'Total number of people counting from departments: {tot}')
 
 uploaded_file = st.sidebar.file_uploader("Import the Fourth Data")
 if uploaded_file is not None:
